@@ -125,10 +125,6 @@ public class GameManager : MonoBehaviour
         {
             _firstSelectedCard = selectedCard;
         }
-        else if (_firstSelectedCard == selectedCard) // Checks for unselecting card
-        {
-            _firstSelectedCard = null;
-        }
         else if (_secondSelectedCard == null)
         {
             _secondSelectedCard = selectedCard;

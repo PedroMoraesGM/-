@@ -60,8 +60,6 @@ public class ScoringManager : MonoBehaviour
 
         SaveScoreData();
         UpdateScoreUI();
-
-        Debug.Log($"Score: {_score} | Combo Multiplier: {_comboMultiplier}");
     }
 
     private void HandleGameover()
