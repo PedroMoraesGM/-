@@ -7,13 +7,25 @@ public class Card : MonoBehaviour
     public bool IsMatched { get; set; } = false;
 
     [SerializeField] private Image frontImage; // Reference to the front image component
+    private Sprite cardImage; // Unique image for this card
 
     private void Awake()
     {
         _animator = GetComponent<Animator>();
     }
 
-    private void Flip()
+    public void SetCardImage(Sprite image)
+    {
+        cardImage = image;
+        frontImage.sprite = cardImage;
+    }
+
+    public Sprite GetCardImage()
+    {
+        return cardImage;
+    }
+
+    public void Flip()
     {
         if (IsMatched) return; // Skip if already matched
         bool isFlipped = _animator.GetBool("isFlipped");
@@ -22,9 +34,12 @@ public class Card : MonoBehaviour
 
     public void ClickButton()
     {
+        if (GameManager.Instance.IsOnCompareView) return;
+
         if (!IsMatched)
         {
             Flip();
+            GameManager.Instance.CardSelected(this);
         }
     }
 }
