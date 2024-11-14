@@ -3,6 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using DG.Tweening;
 
 public class GameManager : MonoBehaviour
 {
@@ -29,11 +30,19 @@ public class GameManager : MonoBehaviour
 
         saveFilePath = Path.Combine(Application.persistentDataPath, "savegame.json");
 
+        SetLoadGameButton();
+    }
+
+    private void SetLoadGameButton()
+    {
         // Display load button if there is saved data
-        _loadGameButton.SetActive(File.Exists(saveFilePath));    }
+        _loadGameButton.SetActive(File.Exists(saveFilePath));
+    }
 
     public void InitializeGameButton()
     {
+        File.Delete(saveFilePath); // Resets save file
+
         int totalCards = _settings.Rows * _settings.Cols;
         List<Sprite> randomImages = GenerateRandomCardImages(totalCards);
 
@@ -83,6 +92,8 @@ public class GameManager : MonoBehaviour
 
     private void InstantiateCards(List<Sprite> images, int rows, int cols)
     {
+        _allCards.Clear();
+        _cardStates.Clear();
         CleanCardsGridContainer();
 
         float cardWidth = _gridContainer.rect.width / cols;
@@ -148,6 +159,13 @@ public class GameManager : MonoBehaviour
 
             UpdateCardState(firstSelect, true);
             UpdateCardState(secondSelect, true);
+
+            // Check for game over condition
+            if (AllCardsMatched())
+            {
+                GameOver();
+                yield break; // Exit coroutine if the game is over
+            }
         }
         else
         {
@@ -161,6 +179,24 @@ public class GameManager : MonoBehaviour
         SaveGame(); // Save the game state after every card selection
     }
 
+    private bool AllCardsMatched()
+    {
+        // Check if every card in the list is matched
+        return _allCards.All(card => card.IsMatched);
+    }
+
+    private void GameOver()
+    {
+        Debug.Log("Game Over! You've matched all cards.");
+
+        foreach (var card in _allCards)
+        {
+            card.transform.DOShakePosition(1.5f);
+        }               
+
+        File.Delete(saveFilePath); // Resets save file
+    }
+
     private void UpdateCardState(Card card, bool isMatched)
     {
         foreach (CardState state in _cardStates)
@@ -168,6 +204,7 @@ public class GameManager : MonoBehaviour
             if (state.cardImage == card.GetCardImage() && state.position == ((RectTransform)card.transform).anchoredPosition)
             {
                 state.isMatched = isMatched;
+                card.transform.DOShakePosition(0.75f);
                 break;
             }
         }
