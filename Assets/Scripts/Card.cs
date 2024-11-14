@@ -1,24 +1,28 @@
+using UnityEditor.Hardware;
 using UnityEngine;
 using UnityEngine.UI;
 
 public class Card : MonoBehaviour
 {
-    private Animator _animator;
+    [SerializeField] private Animator _animator;
     public bool IsMatched { get; set; } = false;
     public bool IsBeingCompared { get; set; } // To track during cards compare delay
 
     [SerializeField] private Image frontImage; // Reference to the front image component
     private Sprite cardImage; // Unique image for this card
 
-    private void Awake()
+    private void Start()
     {
-        _animator = GetComponent<Animator>();
+        if (IsMatched) // When loading a already matched card
+        {
+            _animator.SetBool("isFlipped", true);
+        }
     }
 
     public void SetCardImage(Sprite image)
     {
         cardImage = image;
-        frontImage.sprite = cardImage;
+        frontImage.sprite = cardImage;        
     }
 
     public Sprite GetCardImage()

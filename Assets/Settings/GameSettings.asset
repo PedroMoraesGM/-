@@ -12,8 +12,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b8f7c2e567d685d4d8301d1995e8c923, type: 3}
   m_Name: GameSettings
   m_EditorClassIdentifier: 
-  Rows: 5
-  Cols: 5
+  Rows: 3
+  Cols: 6
   CardImages:
   - {fileID: 21300000, guid: 99d577ebb76c68c4386ffa8110a1e233, type: 3}
   - {fileID: 21300000, guid: 88b56692973ec384bb55121578c64c33, type: 3}

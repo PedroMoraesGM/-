@@ -1,6 +1,8 @@
 using UnityEngine;
 using System.Collections;
 using System.Collections.Generic;
+using System.IO;
+using System.Linq;
 
 public class GameManager : MonoBehaviour
 {
@@ -11,19 +13,26 @@ public class GameManager : MonoBehaviour
     private List<CardState> _cardStates = new List<CardState>(); // To track state and position for save/load
 
     [SerializeField] private GameSettings _settings; // All the game settings
-    [SerializeField] private RectTransform _gridContainer; // Container for card layout
     [SerializeField] private Card _cardPrefab; // Prefab of a single card
+    [Header("UI")]
+    [SerializeField] private RectTransform _gridContainer; // Container for card layout
+    [SerializeField] private GameObject _loadGameButton;
 
-    
+    private string saveFilePath;
+
     private void Awake()
     {
         if (Instance == null)
             Instance = this;
         else
             Destroy(gameObject);
-    }
 
-    public void InitializeGame()
+        saveFilePath = Path.Combine(Application.persistentDataPath, "savegame.json");
+
+        // Display load button if there is saved data
+        _loadGameButton.SetActive(File.Exists(saveFilePath));    }
+
+    public void InitializeGameButton()
     {
         int totalCards = _settings.Rows * _settings.Cols;
         List<Sprite> randomImages = GenerateRandomCardImages(totalCards);
@@ -63,9 +72,19 @@ public class GameManager : MonoBehaviour
         }
     }
 
+    private void CleanCardsGridContainer()
+    {
+        // Clear any existing cards in the grid
+        foreach (Transform child in _gridContainer)
+        {
+            Destroy(child.gameObject);
+        }
+    }
+
     private void InstantiateCards(List<Sprite> images, int rows, int cols)
     {
-        // Calculate the size of each card based on container and grid layout
+        CleanCardsGridContainer();
+
         float cardWidth = _gridContainer.rect.width / cols;
         float cardHeight = _gridContainer.rect.height / rows;
 
@@ -74,24 +93,19 @@ public class GameManager : MonoBehaviour
             int row = i / cols;
             int col = i % cols;
 
-            // Instantiate card prefab and set its parent to gridContainer
             Card newCard = Instantiate(_cardPrefab, _gridContainer);
             newCard.transform.localScale = Vector3.one;
 
-            // Set the card's size
             RectTransform cardRect = newCard.GetComponent<RectTransform>();
             cardRect.sizeDelta = new Vector2(cardWidth, cardHeight);
 
-            // Position card based on row and column within the grid
             float posX = col * cardWidth - (_gridContainer.rect.width / 2) + (cardWidth / 2);
             float posY = row * cardHeight - (_gridContainer.rect.height / 2) + (cardHeight / 2);
             cardRect.anchoredPosition = new Vector2(posX, posY);
 
-            // Set the card's image
             newCard.SetCardImage(images[i]);
             newCard.IsMatched = false;
 
-            // Add the card to the list of all cards and track its state for save/load
             _allCards.Add(newCard);
             _cardStates.Add(new CardState { cardImage = images[i], position = new Vector2(posX, posY), isMatched = false });
         }
@@ -103,7 +117,7 @@ public class GameManager : MonoBehaviour
         {
             _firstSelectedCard = selectedCard;
         }
-        else if (_firstSelectedCard == selectedCard) //Checks for unselecting card
+        else if (_firstSelectedCard == selectedCard) // Checks for unselecting card
         {
             _firstSelectedCard = null;
         }
@@ -111,24 +125,21 @@ public class GameManager : MonoBehaviour
         {
             _secondSelectedCard = selectedCard;
             StartCoroutine(CheckForMatch());
-        }
+        }        
     }
 
     private IEnumerator CheckForMatch()
     {
-
         Card firstSelect = _firstSelectedCard;
         Card secondSelect = _secondSelectedCard;
 
-        // Track these cards being compared to lock input on then
         firstSelect.IsBeingCompared = true;
         secondSelect.IsBeingCompared = true;
 
-        // Reset selections
         _firstSelectedCard = null;
         _secondSelectedCard = null;
 
-        yield return new WaitForSeconds(0.5f); // Small delay for viewing
+        yield return new WaitForSeconds(0.5f);
 
         if (firstSelect.GetCardImage() == secondSelect.GetCardImage())
         {
@@ -146,6 +157,8 @@ public class GameManager : MonoBehaviour
 
         firstSelect.IsBeingCompared = false;
         secondSelect.IsBeingCompared = false;
+
+        SaveGame(); // Save the game state after every card selection
     }
 
     private void UpdateCardState(Card card, bool isMatched)
@@ -159,9 +172,61 @@ public class GameManager : MonoBehaviour
             }
         }
     }
+
+    private void SaveGame()
+    {
+        // Serialize the game state to JSON
+        string json = JsonUtility.ToJson(new GameData(_cardStates));
+        File.WriteAllText(saveFilePath, json);
+    }
+    public void LoadGameButton()
+    {
+        // Load the game state from JSON
+        string json = File.ReadAllText(saveFilePath);
+        GameData gameData = JsonUtility.FromJson<GameData>(json);
+
+        // Calculate card dimensions based on grid layout
+        int rows = _settings.Rows;
+        int cols = _settings.Cols;
+        float cardWidth = _gridContainer.rect.width / cols;
+        float cardHeight = _gridContainer.rect.height / rows;
+
+        CleanCardsGridContainer();
+
+        _allCards.Clear();
+        _cardStates.Clear();
+
+        // Restore game from the saved card states
+        foreach (CardState state in gameData.CardStates)
+        {
+            Card newCard = Instantiate(_cardPrefab, _gridContainer);
+            newCard.IsMatched = state.isMatched;
+            newCard.SetCardImage(state.cardImage);
+
+            // Adjust card size based on container and grid layout
+            RectTransform cardRect = newCard.GetComponent<RectTransform>();
+            cardRect.sizeDelta = new Vector2(cardWidth, cardHeight);
+
+            // Position the card based on its saved position
+            cardRect.anchoredPosition = state.position;
+
+            _allCards.Add(newCard);
+            _cardStates.Add(state);
+        }
+    }
 }
 
-// Structure to track each card’s position and match state for save/load
+[System.Serializable]
+public class GameData
+{
+    public List<CardState> CardStates;
+
+    public GameData(List<CardState> cardStates)
+    {
+        CardStates = cardStates;
+    }
+}
+
 [System.Serializable]
 public class CardState
 {
