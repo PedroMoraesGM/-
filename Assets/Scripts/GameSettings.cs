@@ -9,7 +9,6 @@ public class GameSettings : ScriptableObject
     public int Rows = 4;
     [Tooltip("Number of columns in the game grid.")]
     public int Cols = 4;
-
     [Header("Card Settings")]
     [Tooltip("List of images for the cards.")]
     public List<Sprite> CardImages = new List<Sprite>();

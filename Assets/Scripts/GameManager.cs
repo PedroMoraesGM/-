@@ -7,8 +7,6 @@ using DG.Tweening;
 
 public class GameManager : MonoBehaviour
 {
-    public static GameManager Instance { get; private set; }
-
     private Card _firstSelectedCard, _secondSelectedCard;
     private List<Card> _allCards = new List<Card>();
     private List<CardState> _cardStates = new List<CardState>(); // To track state and position for save/load
@@ -23,10 +21,7 @@ public class GameManager : MonoBehaviour
 
     private void Awake()
     {
-        if (Instance == null)
-            Instance = this;
-        else
-            Destroy(gameObject);
+        GameEventsManager.Instance.OnCardSelected += CardSelected;
 
         saveFilePath = Path.Combine(Application.persistentDataPath, "savegame.json");
 
@@ -48,6 +43,8 @@ public class GameManager : MonoBehaviour
 
         // Instantiate and assign images to cards
         InstantiateCards(randomImages, _settings.Rows, _settings.Cols);
+
+        GameEventsManager.Instance.GameStarted();
     }
 
     private List<Sprite> GenerateRandomCardImages(int totalCards)
@@ -160,6 +157,8 @@ public class GameManager : MonoBehaviour
             UpdateCardState(firstSelect, true);
             UpdateCardState(secondSelect, true);
 
+            GameEventsManager.Instance.CardCompared(true);
+
             // Check for game over condition
             if (AllCardsMatched())
             {
@@ -171,6 +170,8 @@ public class GameManager : MonoBehaviour
         {
             firstSelect.Flip();
             secondSelect.Flip();
+
+            GameEventsManager.Instance.CardCompared(false);
         }
 
         firstSelect.IsBeingCompared = false;
@@ -195,6 +196,8 @@ public class GameManager : MonoBehaviour
         }               
 
         File.Delete(saveFilePath); // Resets save file
+
+        GameEventsManager.Instance.Gameover();
     }
 
     private void UpdateCardState(Card card, bool isMatched)
@@ -250,6 +253,13 @@ public class GameManager : MonoBehaviour
             _allCards.Add(newCard);
             _cardStates.Add(state);
         }
+
+        GameEventsManager.Instance.GameLoaded();
+    }
+
+    private void OnDestroy()
+    {
+        GameEventsManager.Instance.OnCardSelected -= CardSelected;
     }
 }
 

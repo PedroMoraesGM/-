@@ -44,7 +44,7 @@ public class Card : MonoBehaviour
         if (!IsMatched)
         {
             Flip();
-            GameManager.Instance.CardSelected(this);
+            GameEventsManager.Instance.CardSelected(this);
         }
     }
 }
