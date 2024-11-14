@@ -5,6 +5,7 @@ public class Card : MonoBehaviour
 {
     private Animator _animator;
     public bool IsMatched { get; set; } = false;
+    public bool IsBeingCompared { get; set; } // To track during cards compare delay
 
     [SerializeField] private Image frontImage; // Reference to the front image component
     private Sprite cardImage; // Unique image for this card
@@ -34,7 +35,7 @@ public class Card : MonoBehaviour
 
     public void ClickButton()
     {
-        if (GameManager.Instance.IsOnCompareView) return;
+        if (IsBeingCompared) return;
 
         if (!IsMatched)
         {

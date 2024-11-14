@@ -14,8 +14,6 @@ public class GameManager : MonoBehaviour
     [SerializeField] private RectTransform _gridContainer; // Container for card layout
     [SerializeField] private Card _cardPrefab; // Prefab of a single card
 
-    private bool _isOnCompareView; // To track during cards compare delay
-    public bool IsOnCompareView {  get { return _isOnCompareView; } }
     
     private void Awake()
     {
@@ -107,7 +105,6 @@ public class GameManager : MonoBehaviour
         }
         else if (_firstSelectedCard == selectedCard) //Checks for unselecting card
         {
-            //firstSelectedCard.Flip();
             _firstSelectedCard = null;
         }
         else if (_secondSelectedCard == null)
@@ -119,30 +116,36 @@ public class GameManager : MonoBehaviour
 
     private IEnumerator CheckForMatch()
     {
-        _isOnCompareView = true;
-        yield return new WaitForSeconds(0.5f); // Small delay for viewing
 
-        if (_firstSelectedCard.GetCardImage() == _secondSelectedCard.GetCardImage())
-        {
-            _firstSelectedCard.IsMatched = true;
-            _secondSelectedCard.IsMatched = true;
+        Card firstSelect = _firstSelectedCard;
+        Card secondSelect = _secondSelectedCard;
 
-            UpdateCardState(_firstSelectedCard, true);
-            UpdateCardState(_secondSelectedCard, true);
-
-            // Update score and other match-related logic here
-        }
-        else
-        {
-            _firstSelectedCard.Flip();
-            _secondSelectedCard.Flip();
-        }
+        // Track these cards being compared to lock input on then
+        firstSelect.IsBeingCompared = true;
+        secondSelect.IsBeingCompared = true;
 
         // Reset selections
         _firstSelectedCard = null;
         _secondSelectedCard = null;
 
-        _isOnCompareView = false; 
+        yield return new WaitForSeconds(0.5f); // Small delay for viewing
+
+        if (firstSelect.GetCardImage() == secondSelect.GetCardImage())
+        {
+            firstSelect.IsMatched = true;
+            secondSelect.IsMatched = true;
+
+            UpdateCardState(firstSelect, true);
+            UpdateCardState(secondSelect, true);
+        }
+        else
+        {
+            firstSelect.Flip();
+            secondSelect.Flip();
+        }
+
+        firstSelect.IsBeingCompared = false;
+        secondSelect.IsBeingCompared = false;
     }
 
     private void UpdateCardState(Card card, bool isMatched)
