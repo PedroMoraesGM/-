@@ -20,12 +20,15 @@ public class GameManager : MonoBehaviour
     private string saveFilePath;
 
     private void Awake()
-    {
-        GameEventsManager.Instance.OnCardSelected += CardSelected;
-
+    {      
         saveFilePath = Path.Combine(Application.persistentDataPath, "savegame.json");
 
         SetLoadGameButton();
+    }
+
+    private void Start()
+    {
+        GameEventsManager.Instance.OnCardSelected += CardSelected;
     }
 
     private void SetLoadGameButton()
