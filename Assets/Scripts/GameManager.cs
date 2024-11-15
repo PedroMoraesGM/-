@@ -158,7 +158,7 @@ public class GameManager : MonoBehaviour
             // Check for game over condition
             if (AllCardsMatched())
             {
-                GameOver();
+                Invoke(nameof(GameOver),1); // Small delay to don't override any last move effect
                 yield break; // Exit coroutine if the game is over
             }
         }
